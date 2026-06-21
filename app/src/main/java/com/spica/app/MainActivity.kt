@@ -25,6 +25,12 @@ class MainActivity : AppCompatActivity() {
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
 
+    private lateinit var audioRecorder: AudioRecorder
+    private var isRecordingAudio = false
+
+    private lateinit var videoRecorder: VideoRecorder
+    private var isRecordingVideo = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -34,6 +40,9 @@ class MainActivity : AppCompatActivity() {
         stopBtn = findViewById(R.id.stopListeningBtn)
         sosBtn = findViewById(R.id.sosBtn)
         contactsBtn = findViewById(R.id.contactsBtn)
+
+        audioRecorder = AudioRecorder(this)
+        videoRecorder = VideoRecorder(this, this)
 
         askPermissions()
 
@@ -105,7 +114,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         speechRecognizer?.startListening(intent)
     }
 
@@ -126,26 +134,70 @@ class MainActivity : AppCompatActivity() {
 
     private fun processCommand(text: String) {
         when {
-            Commands.START_AUDIO.any { text.contains(it) } -> {
-                Toast.makeText(this, "Audio Recording Started", Toast.LENGTH_SHORT).show()
-                statusText.text = "● RECORDING AUDIO"
-            }
-            Commands.STOP_AUDIO.any { text.contains(it) } -> {
-                Toast.makeText(this, "Audio Recording Stopped", Toast.LENGTH_SHORT).show()
-                statusText.text = "● LISTENING..."
-            }
-            Commands.START_VIDEO.any { text.contains(it) } -> {
-                Toast.makeText(this, "Video Recording Started", Toast.LENGTH_SHORT).show()
-                statusText.text = "● RECORDING VIDEO"
-            }
-            Commands.STOP_VIDEO.any { text.contains(it) } -> {
-                Toast.makeText(this, "Video Recording Stopped", Toast.LENGTH_SHORT).show()
-                statusText.text = "● LISTENING..."
-            }
+            Commands.START_AUDIO.any { text.contains(it) } -> startAudio()
+            Commands.STOP_AUDIO.any { text.contains(it) } -> stopAudio()
+            Commands.START_VIDEO.any { text.contains(it) } -> startVideo()
+            Commands.STOP_VIDEO.any { text.contains(it) } -> stopVideo()
             Commands.EMERGENCY.any { text.contains(it) } -> {
                 Toast.makeText(this, "EMERGENCY ACTIVATED", Toast.LENGTH_SHORT).show()
                 statusText.text = "● SOS ACTIVATED"
             }
+        }
+    }
+
+    private fun startAudio() {
+        if (isRecordingAudio) return
+        val started = audioRecorder.startRecording()
+        if (started) {
+            isRecordingAudio = true
+            statusText.text = "● RECORDING AUDIO"
+            statusText.setTextColor(0xFFE63946.toInt())
+            Toast.makeText(this, "Audio Recording Started", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Recording failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopAudio() {
+        if (!isRecordingAudio) return
+        val file = audioRecorder.stopRecording()
+        isRecordingAudio = false
+        statusText.text = "● LISTENING..."
+        statusText.setTextColor(0xFF4D9DE0.toInt())
+        if (file != null) {
+            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startVideo() {
+        if (isRecordingVideo) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Camera permission needed", Toast.LENGTH_SHORT).show()
+            askPermissions()
+            return
+        }
+        videoRecorder.startRecording { success ->
+            if (success) {
+                isRecordingVideo = true
+                statusText.text = "● RECORDING VIDEO"
+                statusText.setTextColor(0xFFE63946.toInt())
+                Toast.makeText(this, "Video Recording Started", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Video failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun stopVideo() {
+        if (!isRecordingVideo) return
+        videoRecorder.stopRecording {
+            isRecordingVideo = false
+            statusText.text = "● LISTENING..."
+            statusText.setTextColor(0xFF4D9DE0.toInt())
+            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
         }
     }
 
