@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var videoRecorder: VideoRecorder
     private var isRecordingVideo = false
 
+    private lateinit var smsSender: SmsSender
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -43,16 +45,14 @@ class MainActivity : AppCompatActivity() {
 
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
+        smsSender = SmsSender(this)
 
         askPermissions()
 
         startBtn.setOnClickListener { startListening() }
         stopBtn.setOnClickListener { stopListening() }
-        sosBtn.setOnClickListener {
-            Toast.makeText(this, "SOS Triggered!", Toast.LENGTH_SHORT).show()
-            statusText.text = "● SOS ACTIVATED"
-        }
-                contactsBtn.setOnClickListener {
+        sosBtn.setOnClickListener { triggerEmergency() }
+        contactsBtn.setOnClickListener {
             startActivity(Intent(this, ContactsActivity::class.java))
         }
     }
@@ -138,10 +138,7 @@ class MainActivity : AppCompatActivity() {
             Commands.STOP_AUDIO.any { text.contains(it) } -> stopAudio()
             Commands.START_VIDEO.any { text.contains(it) } -> startVideo()
             Commands.STOP_VIDEO.any { text.contains(it) } -> stopVideo()
-            Commands.EMERGENCY.any { text.contains(it) } -> {
-                Toast.makeText(this, "EMERGENCY ACTIVATED", Toast.LENGTH_SHORT).show()
-                statusText.text = "● SOS ACTIVATED"
-            }
+            Commands.EMERGENCY.any { text.contains(it) } -> triggerEmergency()
         }
     }
 
@@ -198,6 +195,26 @@ class MainActivity : AppCompatActivity() {
             statusText.text = "● LISTENING..."
             statusText.setTextColor(0xFF4D9DE0.toInt())
             Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun triggerEmergency() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+            != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "SMS permission needed", Toast.LENGTH_SHORT).show()
+            askPermissions()
+            return
+        }
+        statusText.text = "● SOS ACTIVATED"
+        statusText.setTextColor(0xFFE63946.toInt())
+        Toast.makeText(this, "Sending emergency SMS...", Toast.LENGTH_SHORT).show()
+
+        smsSender.sendEmergencySms { count ->
+            if (count > 0) {
+                Toast.makeText(this, "SMS sent to $count contact(s)", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "No contacts! Add contacts first", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
