@@ -52,8 +52,8 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "SOS Triggered!", Toast.LENGTH_SHORT).show()
             statusText.text = "● SOS ACTIVATED"
         }
-        contactsBtn.setOnClickListener {
-            Toast.makeText(this, "Contacts (coming soon)", Toast.LENGTH_SHORT).show()
+                contactsBtn.setOnClickListener {
+            startActivity(Intent(this, ContactsActivity::class.java))
         }
     }
 
