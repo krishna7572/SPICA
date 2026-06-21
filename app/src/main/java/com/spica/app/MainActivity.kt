@@ -10,6 +10,7 @@ import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -34,8 +35,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
-
-    private var lastRecordedFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -167,9 +166,7 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            lastRecordedFile = file
-            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
-            shareHelper.shareToAny(file)
+            showShareDialog(file)
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
@@ -203,6 +200,17 @@ class MainActivity : AppCompatActivity() {
             statusText.setTextColor(0xFF4D9DE0.toInt())
             Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun showShareDialog(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Recording Saved")
+            .setMessage("Share this recording with your contacts?")
+            .setPositiveButton("SHARE") { _, _ ->
+                shareHelper.shareToAny(file)
+            }
+            .setNegativeButton("LATER", null)
+            .show()
     }
 
     private fun triggerEmergency() {
