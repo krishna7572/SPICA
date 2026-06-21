@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
+    private lateinit var shareHelper: ShareHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
         smsSender = SmsSender(this)
+        shareHelper = ShareHelper(this)
         shareHelper = ShareHelper(this)
 
         askPermissions()
@@ -165,9 +167,9 @@ class MainActivity : AppCompatActivity() {
         isRecordingAudio = false
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
-        if (file != null) {
-            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_SHORT).show()
-            showShareDialog(file)
+                if (file != null) {
+            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
+            shareHelper.shareToAny(file)
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
