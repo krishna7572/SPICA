@@ -198,24 +198,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun triggerEmergency() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
-            != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "SMS permission needed", Toast.LENGTH_SHORT).show()
-            askPermissions()
-            return
-        }
+        private fun triggerEmergency() {
         statusText.text = "● SOS ACTIVATED"
         statusText.setTextColor(0xFFE63946.toInt())
-        Toast.makeText(this, "Sending emergency SMS...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "EMERGENCY ACTIVATED!", Toast.LENGTH_SHORT).show()
 
-        smsSender.sendEmergencySms { count ->
-            if (count > 0) {
-                Toast.makeText(this, "SMS sent to $count contact(s)", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this, "No contacts! Add contacts first", Toast.LENGTH_LONG).show()
+        // 1. Audio recording auto-start
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED) {
+            if (!isRecordingAudio) {
+                val started = audioRecorder.startRecording()
+                if (started) isRecordingAudio = true
             }
         }
+
+        // 2. Video recording auto-start
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED) {
+            if (!isRecordingVideo) {
+                videoRecorder.startRecording { success ->
+                    if (success) isRecordingVideo = true
+                }
+            }
+        }
+
+        // 3. SMS + location auto-send
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+            == PackageManager.PERMISSION_GRANTED) {
+            smsSender.sendEmergencySms { count ->
+                if (count > 0) {
+                    Toast.makeText(this, "SOS: SMS sent to $count contact(s)",
+                        Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "SOS: No contacts! Add contacts first",
+                        Toast.LENGTH_LONG).show()
+                }
+            }
+        } else {
+            Toast.makeText(this, "SMS permission needed", Toast.LENGTH_SHORT).show()
+            askPermissions()
+        }
+
+        statusText.text = "● SOS: RECORDING + ALERT SENT"
     }
 
     override fun onDestroy() {
