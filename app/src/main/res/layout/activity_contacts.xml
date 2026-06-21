@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0A0E21"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EMERGENCY CONTACTS"
+        android:textColor="#4D9DE0"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.15"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/nameInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="Name (e.g. Didi)"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#5C6B7A"
+        android:background="@drawable/btn_secondary"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/numberInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="Phone Number (with +91)"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#5C6B7A"
+        android:background="@drawable/btn_secondary"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:inputType="phone" />
+
+    <Button
+        android:id="@+id/addContactBtn"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="ADD CONTACT"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:letterSpacing="0.1"
+        android:background="@drawable/btn_primary"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SAVED CONTACTS"
+        android:textColor="#5C6B7A"
+        android:textSize="13sp"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="12dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/contactsList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
