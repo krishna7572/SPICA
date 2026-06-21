@@ -166,7 +166,8 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            showShareDialog(file)
+            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
+            askToShare(file)
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
@@ -202,22 +203,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showShareDialog(file: File) {
-        AlertDialog.Builder(this)
-            .setTitle("Recording Saved")
-            .setMessage("Share this recording with your contacts?")
-            .setPositiveButton("SHARE") { _, _ ->
-                shareHelper.shareToAny(file)
-            }
-            .setNegativeButton("LATER", null)
-            .show()
-    }
-
     private fun triggerEmergency() {
         statusText.text = "● SOS ACTIVATED"
         statusText.setTextColor(0xFFE63946.toInt())
         Toast.makeText(this, "EMERGENCY ACTIVATED!", Toast.LENGTH_SHORT).show()
 
+        // 1. Audio recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED) {
             if (!isRecordingAudio) {
@@ -226,6 +217,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 2. Video recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED) {
             if (!isRecordingVideo) {
@@ -235,6 +227,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 3. SMS + location auto-send
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
             == PackageManager.PERMISSION_GRANTED) {
             smsSender.sendEmergencySms { count ->
@@ -252,6 +245,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         statusText.text = "● SOS: RECORDING + ALERT SENT"
+    }
+
+    private fun askToShare(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Recording Saved")
+            .setMessage("Do you want to share this recording?")
+            .setPositiveButton("SHARE") { _, _ ->
+                shareHelper.shareToAny(file)
+            }
+            .setNegativeButton("LATER", null)
+            .show()
     }
 
     override fun onDestroy() {
