@@ -10,7 +10,6 @@ import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -35,7 +34,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
-    private lateinit var shareHelper: ShareHelper
+
+    private var lastRecordedFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +50,6 @@ class MainActivity : AppCompatActivity() {
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
         smsSender = SmsSender(this)
-        shareHelper = ShareHelper(this)
         shareHelper = ShareHelper(this)
 
         askPermissions()
@@ -167,7 +166,8 @@ class MainActivity : AppCompatActivity() {
         isRecordingAudio = false
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
-                if (file != null) {
+        if (file != null) {
+            lastRecordedFile = file
             Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
             shareHelper.shareToAny(file)
         } else {
@@ -201,28 +201,8 @@ class MainActivity : AppCompatActivity() {
             isRecordingVideo = false
             statusText.text = "● LISTENING..."
             statusText.setTextColor(0xFF4D9DE0.toInt())
-            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
         }
-    }
-
-    private fun showShareDialog(file: File) {
-        AlertDialog.Builder(this)
-            .setTitle("Recording Saved")
-            .setMessage("Share this recording?")
-            .setPositiveButton("WhatsApp") { _, _ ->
-                val storage = ContactStorage(this)
-                val contacts = storage.getContacts()
-                if (contacts.isNotEmpty()) {
-                    shareHelper.shareToWhatsApp(file, contacts[0].number)
-                } else {
-                    shareHelper.shareToAny(file)
-                }
-            }
-            .setNeutralButton("Share to Other") { _, _ ->
-                shareHelper.shareToAny(file)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     private fun triggerEmergency() {
