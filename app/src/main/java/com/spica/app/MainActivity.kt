@@ -10,9 +10,11 @@ import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private var isRecordingVideo = false
 
     private lateinit var smsSender: SmsSender
+    private lateinit var shareHelper: ShareHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
         smsSender = SmsSender(this)
+        shareHelper = ShareHelper(this)
 
         askPermissions()
 
@@ -162,7 +166,8 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_SHORT).show()
+            showShareDialog(file)
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
@@ -194,16 +199,35 @@ class MainActivity : AppCompatActivity() {
             isRecordingVideo = false
             statusText.text = "● LISTENING..."
             statusText.setTextColor(0xFF4D9DE0.toInt())
-            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_SHORT).show()
         }
     }
 
-        private fun triggerEmergency() {
+    private fun showShareDialog(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Recording Saved")
+            .setMessage("Share this recording?")
+            .setPositiveButton("WhatsApp") { _, _ ->
+                val storage = ContactStorage(this)
+                val contacts = storage.getContacts()
+                if (contacts.isNotEmpty()) {
+                    shareHelper.shareToWhatsApp(file, contacts[0].number)
+                } else {
+                    shareHelper.shareToAny(file)
+                }
+            }
+            .setNeutralButton("Share to Other") { _, _ ->
+                shareHelper.shareToAny(file)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun triggerEmergency() {
         statusText.text = "● SOS ACTIVATED"
         statusText.setTextColor(0xFFE63946.toInt())
         Toast.makeText(this, "EMERGENCY ACTIVATED!", Toast.LENGTH_SHORT).show()
 
-        // 1. Audio recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED) {
             if (!isRecordingAudio) {
@@ -212,7 +236,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Video recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED) {
             if (!isRecordingVideo) {
@@ -222,7 +245,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 3. SMS + location auto-send
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
             == PackageManager.PERMISSION_GRANTED) {
             smsSender.sendEmergencySms { count ->
