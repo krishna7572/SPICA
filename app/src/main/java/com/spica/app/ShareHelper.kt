@@ -8,7 +8,6 @@ import java.io.File
 
 class ShareHelper(private val context: Context) {
 
-    // Audio file share (File se)
     fun shareFile(file: File) {
         try {
             val uri = FileProvider.getUriForFile(
@@ -22,7 +21,10 @@ class ShareHelper(private val context: Context) {
         }
     }
 
-    // Video share (Uri se - kyunki video MediaStore me save hota hai)
+    fun shareToAny(file: File) {
+        shareFile(file)
+    }
+
     fun shareUri(uri: Uri, mimeType: String) {
         try {
             val intent = Intent(Intent.ACTION_SEND).apply {
