@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0E21">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACCOUNT"
+            android:textColor="#4D9DE0"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="32dp" />
+
+        <ImageView
+            android:id="@+id/profileImageLarge"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:background="#161B33"
+            android:padding="20dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/changePhotoBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Change Photo"
+            android:textColor="#4D9DE0"
+            android:textSize="14sp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="32dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FULL NAME"
+            android:textColor="#5C6B7A"
+            android:textSize="12sp"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/nameInput"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Enter your name"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#5C6B7A"
+            android:background="@drawable/btn_secondary"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginBottom="20dp"
+            android:inputType="textPersonName" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PHONE NUMBER"
+            android:textColor="#5C6B7A"
+            android:textSize="12sp"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/phoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="+91 XXXXXXXXXX"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#5C6B7A"
+            android:background="@drawable/btn_secondary"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginBottom="32dp"
+            android:inputType="phone" />
+
+        <Button
+            android:id="@+id/saveAccountBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="SAVE"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:background="@drawable/btn_primary" />
+
+    </LinearLayout>
+
+</ScrollView>
