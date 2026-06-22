@@ -1,131 +1,222 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#0A0E21">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/titleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SPICA"
-        android:textColor="#4D9DE0"
-        android:textSize="52sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.3"
-        android:layout_marginTop="60dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/subtitleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EMERGENCY SAFETY SYSTEM"
-        android:textColor="#5C6B7A"
-        android:textSize="12sp"
-        android:letterSpacing="0.25"
-        android:layout_marginTop="4dp"
-        app:layout_constraintTop_toBottomOf="@id/titleText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="● SYSTEM READY"
-        android:textColor="#4CAF50"
-        android:textSize="14sp"
-        android:letterSpacing="0.1"
-        android:layout_marginTop="30dp"
-        app:layout_constraintTop_toBottomOf="@id/subtitleText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingStart="40dp"
-        android:paddingEnd="40dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_height="match_parent"
+        android:background="#0A0E21">
 
-        <Button
-            android:id="@+id/startListeningBtn"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="START LISTENING"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:background="@drawable/btn_primary"
-            android:layout_marginBottom="16dp" />
+        <ImageButton
+            android:id="@+id/menuBtn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#4D9DE0"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:id="@+id/stopListeningBtn"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="STOP LISTENING"
-            android:textColor="#8899AA"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:background="@drawable/btn_secondary"
-            android:layout_marginBottom="40dp" />
-
-        <Button
-            android:id="@+id/sosBtn"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:text="SOS"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SPICA"
+            android:textColor="#4D9DE0"
+            android:textSize="52sp"
             android:textStyle="bold"
             android:letterSpacing="0.3"
-            android:background="@drawable/btn_sos" />
+            android:layout_marginTop="60dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/subtitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMERGENCY SAFETY SYSTEM"
+            android:textColor="#5C6B7A"
+            android:textSize="12sp"
+            android:letterSpacing="0.25"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/titleText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● SYSTEM READY"
+            android:textColor="#4CAF50"
+            android:textSize="14sp"
+            android:letterSpacing="0.1"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/subtitleText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <Button
+                android:id="@+id/startListeningBtn"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="START LISTENING"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:background="@drawable/btn_primary"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/stopListeningBtn"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="STOP LISTENING"
+                android:textColor="#8899AA"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:background="@drawable/btn_secondary"
+                android:layout_marginBottom="40dp" />
+
+            <Button
+                android:id="@+id/sosBtn"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:text="SOS"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.3"
+                android:background="@drawable/btn_sos" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/contactsBtn"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="MANAGE CONTACTS"
+            android:textColor="#4D9DE0"
+            android:textSize="14sp"
+            android:letterSpacing="0.1"
+            android:background="@drawable/btn_outline"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
+            android:layout_marginBottom="30dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#0D1227">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:orientation="vertical"
+            android:gravity="bottom"
+            android:padding="24dp"
+            android:background="#161B33">
+
+            <ImageView
+                android:id="@+id/profileImage"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:background="#4D9DE0"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/drawerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap to set name"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/drawerPhone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No number set"
+                android:textColor="#8899AA"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/navAccount"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="  👤  Account"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:paddingStart="24dp"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/navEditSms"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="  ✉️  Edit Emergency SMS"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:paddingStart="24dp"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/navContacts"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="  👥  Contacts"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:paddingStart="24dp"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/navAbout"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="  ℹ️  About SPICA"
+            android:textColor="#8899AA"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:paddingStart="24dp"
+            android:background="?attr/selectableItemBackground" />
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/contactsBtn"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="MANAGE CONTACTS"
-        android:textColor="#4D9DE0"
-        android:textSize="14sp"
-        android:letterSpacing="0.1"
-        android:background="@drawable/btn_outline"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
-        android:layout_marginBottom="30dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-        <Button
-        android:id="@+id/shareBtn"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="SHARE LAST RECORDING"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.1"
-        android:background="@drawable/btn_primary"
-        android:visibility="gone"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
-        android:layout_marginBottom="90dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
