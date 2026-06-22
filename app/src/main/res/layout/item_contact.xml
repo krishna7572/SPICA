@@ -4,10 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:background="@drawable/btn_secondary"
     android:padding="16dp"
-    android:layout_marginBottom="10dp">
+    android:gravity="center_vertical"
+    android:background="#0D1227">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -19,30 +18,26 @@
             android:id="@+id/contactName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Name"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/contactNumber"
+            android:id="@+id/contactPhone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Number"
             android:textColor="#8899AA"
-            android:textSize="14sp"
-            android:layout_marginTop="2dp" />
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
 
     </LinearLayout>
 
-    <TextView
+    <ImageButton
         android:id="@+id/deleteBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="REMOVE"
-        android:textColor="#E63946"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:padding="8dp" />
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:tint="#E63946" />
 
 </LinearLayout>
