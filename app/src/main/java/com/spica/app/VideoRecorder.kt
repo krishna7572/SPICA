@@ -1,7 +1,10 @@
 package com.spica.app
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
@@ -13,8 +16,6 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import android.content.ContentValues
-import android.provider.MediaStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,6 +27,7 @@ class VideoRecorder(
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
+    private var savedUri: Uri? = null
 
     fun startRecording(onResult: (Boolean) -> Unit) {
         val providerFuture = ProcessCameraProvider.getInstance(context)
@@ -78,6 +80,8 @@ class VideoRecorder(
                 ?.start(ContextCompat.getMainExecutor(context)) { event ->
                     if (event is VideoRecordEvent.Start) {
                         onResult(true)
+                    } else if (event is VideoRecordEvent.Finalize) {
+                        savedUri = event.outputResults.outputUri
                     }
                 }
         } catch (e: Exception) {
@@ -86,14 +90,14 @@ class VideoRecorder(
         }
     }
 
-    fun stopRecording(onStopped: () -> Unit) {
+    fun stopRecording(onStopped: (Uri?) -> Unit) {
         try {
             recording?.stop()
             recording = null
-            onStopped()
+            onStopped(savedUri)
         } catch (e: Exception) {
             e.printStackTrace()
-            onStopped()
+            onStopped(null)
         }
     }
 }
