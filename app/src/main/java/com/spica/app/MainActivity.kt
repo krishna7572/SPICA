@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
 
+    private var lastAudioFile: File? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -80,28 +82,19 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Microphone permission needed", Toast.LENGTH_SHORT).show()
-            askPermissions()
-            return
+            askPermissions(); return
         }
-
         isListening = true
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
-
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    processCommand(matches[0].lowercase())
-                }
+                val m = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!m.isNullOrEmpty()) processCommand(m[0].lowercase())
                 if (isListening) restartListening()
             }
-
-            override fun onError(error: Int) {
-                if (isListening) restartListening()
-            }
-
+            override fun onError(error: Int) { if (isListening) restartListening() }
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
@@ -110,7 +103,6 @@ class MainActivity : AppCompatActivity() {
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
-
         beginRecognition()
     }
 
@@ -122,15 +114,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun restartListening() {
-        speechRecognizer?.cancel()
-        beginRecognition()
+        speechRecognizer?.cancel(); beginRecognition()
     }
 
     private fun stopListening() {
         isListening = false
-        speechRecognizer?.cancel()
-        speechRecognizer?.destroy()
-        speechRecognizer = null
+        speechRecognizer?.cancel(); speechRecognizer?.destroy(); speechRecognizer = null
         statusText.text = "● SYSTEM READY"
         statusText.setTextColor(0xFF4CAF50.toInt())
         Toast.makeText(this, "Listening stopped", Toast.LENGTH_SHORT).show()
@@ -148,14 +137,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun startAudio() {
         if (isRecordingAudio) return
-        val started = audioRecorder.startRecording()
-        if (started) {
+        if (audioRecorder.startRecording()) {
             isRecordingAudio = true
             statusText.text = "● RECORDING AUDIO"
             statusText.setTextColor(0xFFE63946.toInt())
             Toast.makeText(this, "Audio Recording Started", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Recording failed", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -166,29 +152,21 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
-            askToShare(file)
-        } else {
-            Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
+            lastAudioFile = file
+            showShareDialog(file)
         }
     }
 
     private fun startVideo() {
         if (isRecordingVideo) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Camera permission needed", Toast.LENGTH_SHORT).show()
-            askPermissions()
-            return
-        }
+            != PackageManager.PERMISSION_GRANTED) { askPermissions(); return }
         videoRecorder.startRecording { success ->
             if (success) {
                 isRecordingVideo = true
                 statusText.text = "● RECORDING VIDEO"
                 statusText.setTextColor(0xFFE63946.toInt())
                 Toast.makeText(this, "Video Recording Started", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Video failed", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -203,59 +181,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showShareDialog(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Recording Saved")
+            .setMessage("Share this recording?")
+            .setPositiveButton("Share") { _, _ -> shareHelper.shareToAny(file) }
+            .setNegativeButton("Later", null)
+            .show()
+    }
+
     private fun triggerEmergency() {
         statusText.text = "● SOS ACTIVATED"
         statusText.setTextColor(0xFFE63946.toInt())
         Toast.makeText(this, "EMERGENCY ACTIVATED!", Toast.LENGTH_SHORT).show()
 
-        // 1. Audio recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED) {
-            if (!isRecordingAudio) {
-                val started = audioRecorder.startRecording()
-                if (started) isRecordingAudio = true
-            }
+            == PackageManager.PERMISSION_GRANTED && !isRecordingAudio) {
+            if (audioRecorder.startRecording()) isRecordingAudio = true
         }
-
-        // 2. Video recording auto-start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED) {
-            if (!isRecordingVideo) {
-                videoRecorder.startRecording { success ->
-                    if (success) isRecordingVideo = true
-                }
-            }
+            == PackageManager.PERMISSION_GRANTED && !isRecordingVideo) {
+            videoRecorder.startRecording { if (it) isRecordingVideo = true }
         }
-
-        // 3. SMS + location auto-send
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
             == PackageManager.PERMISSION_GRANTED) {
             smsSender.sendEmergencySms { count ->
-                if (count > 0) {
-                    Toast.makeText(this, "SOS: SMS sent to $count contact(s)",
-                        Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(this, "SOS: No contacts! Add contacts first",
-                        Toast.LENGTH_LONG).show()
-                }
+                Toast.makeText(this,
+                    if (count > 0) "SOS: SMS sent to $count contact(s)"
+                    else "SOS: No contacts! Add first", Toast.LENGTH_LONG).show()
             }
-        } else {
-            Toast.makeText(this, "SMS permission needed", Toast.LENGTH_SHORT).show()
-            askPermissions()
-        }
-
+        } else { askPermissions() }
         statusText.text = "● SOS: RECORDING + ALERT SENT"
-    }
-
-    private fun askToShare(file: File) {
-        AlertDialog.Builder(this)
-            .setTitle("Recording Saved")
-            .setMessage("Do you want to share this recording?")
-            .setPositiveButton("SHARE") { _, _ ->
-                shareHelper.shareToAny(file)
-            }
-            .setNegativeButton("LATER", null)
-            .show()
     }
 
     override fun onDestroy() {
