@@ -2,15 +2,16 @@ package com.spica.app
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
@@ -25,6 +26,13 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
     private lateinit var stopBtn: Button
     private lateinit var sosBtn: Button
     private lateinit var contactsBtn: Button
+    private lateinit var menuBtn: ImageButton
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var drawerName: TextView
+    private lateinit var drawerPhone: TextView
+    private lateinit var navAccount: TextView
+    private lateinit var navEditSms: TextView
+    private lateinit var navContacts: TextView
 
     private var speechService: SpeechService? = null
     private var isListening = false
@@ -37,18 +45,32 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
 
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
+    private lateinit var prefs: SharedPreferences
 
     private var currentLang = "en"
+
+    companion object {
+        const val DEFAULT_SMS = "🆘 EMERGENCY ALERT! I am in danger and need immediate help. Please contact me or send help to my location as soon as possible. This is an automated message from SPICA Emergency App. My current location: {location}"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        prefs = getSharedPreferences("spica_prefs", Context.MODE_PRIVATE)
 
         statusText = findViewById(R.id.statusText)
         startBtn = findViewById(R.id.startListeningBtn)
         stopBtn = findViewById(R.id.stopListeningBtn)
         sosBtn = findViewById(R.id.sosBtn)
         contactsBtn = findViewById(R.id.contactsBtn)
+        menuBtn = findViewById(R.id.menuBtn)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        drawerName = findViewById(R.id.drawerName)
+        drawerPhone = findViewById(R.id.drawerPhone)
+        navAccount = findViewById(R.id.navAccount)
+        navEditSms = findViewById(R.id.navEditSms)
+        navContacts = findViewById(R.id.navContacts)
 
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
@@ -56,6 +78,24 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
         shareHelper = ShareHelper(this)
 
         askPermissions()
+        updateDrawerInfo()
+
+        menuBtn.setOnClickListener { drawerLayout.openDrawer(findViewById(R.id.navDrawer)) }
+
+        navAccount.setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, AccountActivity::class.java))
+        }
+
+        navEditSms.setOnClickListener {
+            drawerLayout.closeDrawers()
+            showEditSmsDialog()
+        }
+
+        navContacts.setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, ContactsActivity::class.java))
+        }
 
         startBtn.setOnClickListener { startListening() }
         stopBtn.setOnClickListener { stopListening() }
@@ -65,12 +105,55 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateDrawerInfo()
+    }
+
+    private fun updateDrawerInfo() {
+        val name = prefs.getString("user_name", "") ?: ""
+        val phone = prefs.getString("user_phone", "") ?: ""
+        drawerName.text = if (name.isNotEmpty()) name else "Tap to set name"
+        drawerPhone.text = if (phone.isNotEmpty()) phone else "No number set"
+    }
+
+    private fun showEditSmsDialog() {
+        val currentMsg = prefs.getString("emergency_sms", DEFAULT_SMS) ?: DEFAULT_SMS
+        val input = EditText(this)
+        input.setText(currentMsg)
+        input.setTextColor(0xFFFFFFFF.toInt())
+        input.setBackgroundColor(0xFF161B33.toInt())
+        input.setPadding(24, 24, 24, 24)
+        input.minLines = 4
+        input.maxLines = 8
+        input.setHorizontallyScrolling(false)
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Emergency SMS")
+            .setMessage("Use {location} where you want location to appear.")
+            .setView(input)
+            .setPositiveButton("SAVE") { _, _ ->
+                val msg = input.text.toString().trim()
+                if (msg.isNotEmpty()) {
+                    prefs.edit().putString("emergency_sms", msg).apply()
+                    Toast.makeText(this, "SMS message updated!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("RESET DEFAULT") { _, _ ->
+                prefs.edit().putString("emergency_sms", DEFAULT_SMS).apply()
+                Toast.makeText(this, "Reset to default!", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("CANCEL", null)
+            .show()
+    }
+
     private fun askPermissions() {
         val permissions = arrayOf(
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAMERA,
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.SEND_SMS
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.READ_CONTACTS
         )
         val notGranted = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -155,7 +238,6 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
     override fun onTimeout() {}
 
     private fun processCommand(text: String) {
-        // Auto language switch
         if (Commands.SWITCH_TO_HINDI.any { text.contains(it) }) {
             currentLang = "hi"
             stopListening()
