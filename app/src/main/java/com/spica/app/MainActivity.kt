@@ -10,7 +10,6 @@ import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -35,8 +34,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
-
-    private var lastAudioFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +79,8 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Microphone permission needed", Toast.LENGTH_SHORT).show()
-            askPermissions(); return
+            askPermissions()
+            return
         }
         isListening = true
         statusText.text = "● LISTENING..."
@@ -90,8 +88,8 @@ class MainActivity : AppCompatActivity() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onResults(results: Bundle?) {
-                val m = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!m.isNullOrEmpty()) processCommand(m[0].lowercase())
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) processCommand(matches[0].lowercase())
                 if (isListening) restartListening()
             }
             override fun onError(error: Int) { if (isListening) restartListening() }
@@ -114,12 +112,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun restartListening() {
-        speechRecognizer?.cancel(); beginRecognition()
+        speechRecognizer?.cancel()
+        beginRecognition()
     }
 
     private fun stopListening() {
         isListening = false
-        speechRecognizer?.cancel(); speechRecognizer?.destroy(); speechRecognizer = null
+        speechRecognizer?.cancel()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
         statusText.text = "● SYSTEM READY"
         statusText.setTextColor(0xFF4CAF50.toInt())
         Toast.makeText(this, "Listening stopped", Toast.LENGTH_SHORT).show()
@@ -151,16 +152,15 @@ class MainActivity : AppCompatActivity() {
         isRecordingAudio = false
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
-        if (file != null) {
-            lastAudioFile = file
-            showShareDialog(file)
-        }
+        if (file != null) askShare(file)
     }
 
     private fun startVideo() {
         if (isRecordingVideo) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED) { askPermissions(); return }
+            != PackageManager.PERMISSION_GRANTED) {
+            askPermissions(); return
+        }
         videoRecorder.startRecording { success ->
             if (success) {
                 isRecordingVideo = true
@@ -181,8 +181,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showShareDialog(file: File) {
-        AlertDialog.Builder(this)
+    private fun askShare(file: File) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Recording Saved")
             .setMessage("Share this recording?")
             .setPositiveButton("Share") { _, _ -> shareHelper.shareToAny(file) }
@@ -194,7 +194,6 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● SOS ACTIVATED"
         statusText.setTextColor(0xFFE63946.toInt())
         Toast.makeText(this, "EMERGENCY ACTIVATED!", Toast.LENGTH_SHORT).show()
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED && !isRecordingAudio) {
             if (audioRecorder.startRecording()) isRecordingAudio = true
