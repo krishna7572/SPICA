@@ -56,7 +56,7 @@ class SmsSender(private val context: Context) {
     }
 
     private fun sendSmsToContacts(locationStr: String, onDone: (Int) -> Unit) {
-        val contacts = ContactsManager(context).getContacts()
+       val contacts: List<Contact> = ContactsManager(context).getContacts()
         if (contacts.isEmpty()) {
             onDone(0)
             return
@@ -68,7 +68,7 @@ class SmsSender(private val context: Context) {
         var sentCount = 0
         val smsManager = SmsManager.getDefault()
 
-        contacts.forEach { contact ->
+        contacts.forEach { contact: Contact ->
             try {
                 val parts = smsManager.divideMessage(message)
                 smsManager.sendMultipartTextMessage(
