@@ -3,7 +3,6 @@ package com.spica.app
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -11,7 +10,6 @@ import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -24,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stopBtn: Button
     private lateinit var sosBtn: Button
     private lateinit var contactsBtn: Button
+    private lateinit var shareBtn: Button
 
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
@@ -37,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
 
+    private var lastRecordedFile: File? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         stopBtn = findViewById(R.id.stopListeningBtn)
         sosBtn = findViewById(R.id.sosBtn)
         contactsBtn = findViewById(R.id.contactsBtn)
+        shareBtn = findViewById(R.id.shareBtn)
 
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
@@ -59,6 +61,11 @@ class MainActivity : AppCompatActivity() {
         sosBtn.setOnClickListener { triggerEmergency() }
         contactsBtn.setOnClickListener {
             startActivity(Intent(this, ContactsActivity::class.java))
+        }
+        shareBtn.setOnClickListener {
+            lastRecordedFile?.let { file ->
+                shareHelper.shareToAny(file)
+            } ?: Toast.makeText(this, "No recording to share", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -167,7 +174,9 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            askShareAudio(file)
+            lastRecordedFile = file
+            shareBtn.visibility = android.view.View.VISIBLE
+            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
@@ -195,34 +204,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopVideo() {
         if (!isRecordingVideo) return
-        videoRecorder.stopRecording { uri ->
+        videoRecorder.stopRecording {
             isRecordingVideo = false
             statusText.text = "● LISTENING..."
             statusText.setTextColor(0xFF4D9DE0.toInt())
-            if (uri != null) {
-                askShareVideo(uri)
-            } else {
-                Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
-            }
+            Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
         }
-    }
-
-    private fun askShareAudio(file: File) {
-        AlertDialog.Builder(this)
-            .setTitle("Recording Saved")
-            .setMessage("Share this audio recording with contacts?")
-            .setPositiveButton("SHARE") { _, _ -> shareHelper.shareFile(file) }
-            .setNegativeButton("LATER", null)
-            .show()
-    }
-
-    private fun askShareVideo(uri: Uri) {
-        AlertDialog.Builder(this)
-            .setTitle("Video Saved")
-            .setMessage("Share this video recording with contacts?")
-            .setPositiveButton("SHARE") { _, _ -> shareHelper.shareUri(uri, "video/mp4") }
-            .setNegativeButton("LATER", null)
-            .show()
     }
 
     private fun triggerEmergency() {
