@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         }
         shareBtn.setOnClickListener {
             lastRecordedFile?.let { file ->
-                shareHelper.shareToAny(file)
+                shareHelper.shareFile(file)
             } ?: Toast.makeText(this, "No recording to share", Toast.LENGTH_SHORT).show()
         }
     }
