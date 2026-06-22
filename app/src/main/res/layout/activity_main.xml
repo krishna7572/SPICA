@@ -131,6 +131,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
+        android:id="@+id/navDrawer"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
