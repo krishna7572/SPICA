@@ -1,30 +1,32 @@
 package com.spica.app
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import org.vosk.Model
+import org.vosk.Recognizer
+import org.vosk.android.RecognitionListener
+import org.vosk.android.SpeechService
 import java.io.File
+import java.io.IOException
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), RecognitionListener {
 
     private lateinit var statusText: TextView
     private lateinit var startBtn: Button
     private lateinit var stopBtn: Button
     private lateinit var sosBtn: Button
     private lateinit var contactsBtn: Button
-    private lateinit var shareBtn: Button
 
-    private var speechRecognizer: SpeechRecognizer? = null
+    private var speechService: SpeechService? = null
     private var isListening = false
 
     private lateinit var audioRecorder: AudioRecorder
@@ -36,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var smsSender: SmsSender
     private lateinit var shareHelper: ShareHelper
 
-    private var lastRecordedFile: File? = null
+    private var currentLang = "en"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +49,6 @@ class MainActivity : AppCompatActivity() {
         stopBtn = findViewById(R.id.stopListeningBtn)
         sosBtn = findViewById(R.id.sosBtn)
         contactsBtn = findViewById(R.id.contactsBtn)
-        shareBtn = findViewById(R.id.shareBtn)
 
         audioRecorder = AudioRecorder(this)
         videoRecorder = VideoRecorder(this, this)
@@ -61,11 +62,6 @@ class MainActivity : AppCompatActivity() {
         sosBtn.setOnClickListener { triggerEmergency() }
         contactsBtn.setOnClickListener {
             startActivity(Intent(this, ContactsActivity::class.java))
-        }
-        shareBtn.setOnClickListener {
-            lastRecordedFile?.let { file ->
-                shareHelper.shareFile(file)
-            } ?: Toast.makeText(this, "No recording to share", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -92,59 +88,89 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        isListening = true
-        statusText.text = "● LISTENING..."
+        statusText.text = "● LOADING MODEL..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
 
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    processCommand(matches[0].lowercase())
+        Thread {
+            try {
+                val modelPath = copyModelToCache(currentLang)
+                val model = Model(modelPath)
+                val recognizer = Recognizer(model, 16000.0f)
+                speechService = SpeechService(recognizer, 16000.0f)
+                speechService?.startListening(this)
+                runOnUiThread {
+                    isListening = true
+                    statusText.text = "● LISTENING..."
+                    statusText.setTextColor(0xFF4D9DE0.toInt())
                 }
-                if (isListening) restartListening()
+            } catch (e: IOException) {
+                runOnUiThread {
+                    statusText.text = "● MODEL ERROR"
+                    Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
-
-            override fun onError(error: Int) {
-                if (isListening) restartListening()
-            }
-
-            override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {}
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-
-        beginRecognition()
+        }.start()
     }
 
-    private fun beginRecognition() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        speechRecognizer?.startListening(intent)
-    }
+    private fun copyModelToCache(lang: String): String {
+        val modelFolder = if (lang == "hi") "model-hi" else "model-en"
+        val outDir = File(cacheDir, modelFolder)
+        if (outDir.exists()) return outDir.absolutePath
 
-    private fun restartListening() {
-        speechRecognizer?.cancel()
-        beginRecognition()
+        outDir.mkdirs()
+        assets.list(modelFolder)?.forEach { fileName ->
+            val input = assets.open("$modelFolder/$fileName")
+            val outFile = File(outDir, fileName)
+            outFile.outputStream().use { input.copyTo(it) }
+        }
+        return outDir.absolutePath
     }
 
     private fun stopListening() {
         isListening = false
-        speechRecognizer?.cancel()
-        speechRecognizer?.destroy()
-        speechRecognizer = null
+        speechService?.stop()
+        speechService?.shutdown()
+        speechService = null
         statusText.text = "● SYSTEM READY"
         statusText.setTextColor(0xFF4CAF50.toInt())
         Toast.makeText(this, "Listening stopped", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onResult(hypothesis: String?) {
+        hypothesis ?: return
+        val text = hypothesis.lowercase()
+        if (text.contains("\"text\"")) {
+            val extracted = text.substringAfter("\"text\" : \"").substringBefore("\"").trim()
+            if (extracted.isNotEmpty()) processCommand(extracted)
+        }
+    }
+
+    override fun onPartialResult(hypothesis: String?) {}
+    override fun onFinalResult(hypothesis: String?) {}
+    override fun onError(e: Exception?) {
+        runOnUiThread {
+            Toast.makeText(this, "Voice error", Toast.LENGTH_SHORT).show()
+        }
+    }
+    override fun onTimeout() {}
+
     private fun processCommand(text: String) {
+        // Auto language switch
+        if (Commands.SWITCH_TO_HINDI.any { text.contains(it) }) {
+            currentLang = "hi"
+            stopListening()
+            startListening()
+            Toast.makeText(this, "Hindi mode", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (Commands.SWITCH_TO_ENGLISH.any { text.contains(it) }) {
+            currentLang = "en"
+            stopListening()
+            startListening()
+            Toast.makeText(this, "English mode", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         when {
             Commands.START_AUDIO.any { text.contains(it) } -> startAudio()
             Commands.STOP_AUDIO.any { text.contains(it) } -> stopAudio()
@@ -174,9 +200,7 @@ class MainActivity : AppCompatActivity() {
         statusText.text = "● LISTENING..."
         statusText.setTextColor(0xFF4D9DE0.toInt())
         if (file != null) {
-            lastRecordedFile = file
-            shareBtn.visibility = android.view.View.VISIBLE
-            Toast.makeText(this, "Saved: ${file.name}", Toast.LENGTH_LONG).show()
+            showShareDialog(file)
         } else {
             Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show()
         }
@@ -210,6 +234,15 @@ class MainActivity : AppCompatActivity() {
             statusText.setTextColor(0xFF4D9DE0.toInt())
             Toast.makeText(this, "Video Saved to Movies/SPICA", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun showShareDialog(file: java.io.File) {
+        AlertDialog.Builder(this)
+            .setTitle("Recording Saved")
+            .setMessage("Share this recording?")
+            .setPositiveButton("SHARE") { _, _ -> shareHelper.shareToAny(file) }
+            .setNegativeButton("CANCEL", null)
+            .show()
     }
 
     private fun triggerEmergency() {
@@ -255,6 +288,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        speechRecognizer?.destroy()
+        speechService?.shutdown()
     }
 }
