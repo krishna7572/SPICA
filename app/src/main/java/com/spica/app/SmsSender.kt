@@ -1,75 +1,85 @@
 package com.spica.app
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
+import android.content.SharedPreferences
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Bundle
 import android.telephony.SmsManager
-import androidx.core.content.ContextCompat
+import android.widget.Toast
 
 class SmsSender(private val context: Context) {
 
-    @SuppressLint("MissingPermission")
-    fun sendEmergencySms(onDone: (Int) -> Unit) {
-        val storage = ContactStorage(context)
-        val contacts = storage.getContacts()
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("spica_prefs", Context.MODE_PRIVATE)
 
+    private val locationManager =
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+    companion object {
+        const val DEFAULT_SMS = "🆘 EMERGENCY ALERT! I am in danger and need immediate help. Please contact me or send help to my location as soon as possible. This is an automated message from SPICA Emergency App. My current location: {location}"
+    }
+
+    fun sendEmergencySms(onDone: (Int) -> Unit) {
+        try {
+            val provider = when {
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                    LocationManager.GPS_PROVIDER
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                    LocationManager.NETWORK_PROVIDER
+                else -> null
+            }
+
+            if (provider != null) {
+                locationManager.requestSingleUpdate(provider, object : LocationListener {
+                    override fun onLocationChanged(location: Location) {
+                        val locationStr = "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+                        sendSmsToContacts(locationStr, onDone)
+                    }
+                    override fun onStatusChanged(p: String?, s: Int, e: Bundle?) {}
+                    override fun onProviderEnabled(p: String) {}
+                    override fun onProviderDisabled(p: String) {}
+                }, null)
+
+                // Fallback after 5 seconds if GPS slow
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    sendSmsToContacts("Location unavailable", onDone)
+                }, 5000)
+
+            } else {
+                sendSmsToContacts("Location unavailable", onDone)
+            }
+        } catch (e: SecurityException) {
+            sendSmsToContacts("Location permission denied", onDone)
+        }
+    }
+
+    private fun sendSmsToContacts(locationStr: String, onDone: (Int) -> Unit) {
+        val contacts = ContactsManager(context).getContacts()
         if (contacts.isEmpty()) {
             onDone(0)
             return
         }
 
-        val location = getLocationLink()
-        val message = Settings.EMERGENCY_MESSAGE.replace("{location}", location)
+        val template = prefs.getString("emergency_sms", DEFAULT_SMS) ?: DEFAULT_SMS
+        val message = template.replace("{location}", locationStr)
 
         var sentCount = 0
-        try {
-            val smsManager = if (android.os.Build.VERSION.SDK_INT >= 31) {
-                context.getSystemService(SmsManager::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            }
+        val smsManager = SmsManager.getDefault()
 
-            for (contact in contacts) {
-                try {
-                    val parts = smsManager.divideMessage(message)
-                    smsManager.sendMultipartTextMessage(
-                        contact.number, null, parts, null, null
-                    )
-                    sentCount++
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+        contacts.forEach { contact ->
+            try {
+                val parts = smsManager.divideMessage(message)
+                smsManager.sendMultipartTextMessage(
+                    contact.phone, null, parts, null, null
+                )
+                sentCount++
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
 
         onDone(sentCount)
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun getLocationLink(): String {
-        return try {
-            if (ContextCompat.checkSelfPermission(context,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-                return "Location unavailable"
-            }
-
-            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
-            if (location != null) {
-                "https://maps.google.com/?q=${location.latitude},${location.longitude}"
-            } else {
-                "Location unavailable"
-            }
-        } catch (e: Exception) {
-            "Location unavailable"
-        }
     }
 }
