@@ -1,13 +1,7 @@
 package com.spica.app
 
-// ============================================
-//  SPICA COMMANDS - Yahan commands edit karo
-//  (Naye words add/change kar sakte ho)
-// ============================================
-
 object Commands {
 
-    // Audio recording shuru karne ke commands
     val START_AUDIO = listOf(
         "start recording",
         "recording shuru karo",
@@ -15,7 +9,6 @@ object Commands {
         "audio shuru karo"
     )
 
-    // Audio recording band karne ke commands
     val STOP_AUDIO = listOf(
         "stop recording",
         "recording band karo",
@@ -23,7 +16,6 @@ object Commands {
         "audio band karo"
     )
 
-    // Video recording shuru karne ke commands
     val START_VIDEO = listOf(
         "start video",
         "video shuru karo",
@@ -31,7 +23,6 @@ object Commands {
         "camera shuru karo"
     )
 
-    // Video recording band karne ke commands
     val STOP_VIDEO = listOf(
         "stop video",
         "video band karo",
@@ -39,12 +30,22 @@ object Commands {
         "camera band karo"
     )
 
-    // Emergency SOS ke commands
     val EMERGENCY = listOf(
         "emergency",
         "madad",
         "spica emergency",
         "spica madad",
         "help me"
+    )
+
+    val SWITCH_TO_HINDI = listOf(
+        "hindi mode",
+        "hindi mein bolo",
+        "switch to hindi"
+    )
+
+    val SWITCH_TO_ENGLISH = listOf(
+        "english mode",
+        "switch to english"
     )
 }
