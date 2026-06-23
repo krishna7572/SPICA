@@ -30,6 +30,8 @@
 
         <activity android:name=".ContactsActivity" />
         <activity android:name=".AccountActivity" />
+        <activity android:name=".AboutActivity" />
+        <activity android:name=".CommandsActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
