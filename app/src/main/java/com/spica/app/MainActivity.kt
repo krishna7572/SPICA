@@ -196,19 +196,29 @@ class MainActivity : AppCompatActivity(), RecognitionListener {
     }
 
     private fun copyModelToCache(lang: String): String {
-        val modelFolder = if (lang == "hi") "model-hi" else "model-en"
-        val outDir = File(cacheDir, modelFolder)
-        if (outDir.exists()) return outDir.absolutePath
+    val modelFolder = if (lang == "hi") "model-hi" else "model-en"
+    val outDir = File(cacheDir, modelFolder)
+    if (outDir.exists() && outDir.list()?.isNotEmpty() == true) return outDir.absolutePath
+    copyAssetFolder(modelFolder, outDir)
+    return outDir.absolutePath
+}
 
-        outDir.mkdirs()
-        assets.list(modelFolder)?.forEach { fileName ->
-            val input = assets.open("$modelFolder/$fileName")
-            val outFile = File(outDir, fileName)
-            outFile.outputStream().use { input.copyTo(it) }
+private fun copyAssetFolder(assetPath: String, outDir: File) {
+    outDir.mkdirs()
+    val list = assets.list(assetPath) ?: return
+    for (item in list) {
+        val subAsset = "$assetPath/$item"
+        val outFile = File(outDir, item)
+        val subList = assets.list(subAsset)
+        if (subList != null && subList.isNotEmpty()) {
+            copyAssetFolder(subAsset, outFile)
+        } else {
+            assets.open(subAsset).use { input ->
+                outFile.outputStream().use { input.copyTo(it) }
+            }
         }
-        return outDir.absolutePath
     }
-
+}
     private fun stopListening() {
         isListening = false
         speechService?.stop()
